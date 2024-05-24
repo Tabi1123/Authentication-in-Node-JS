@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js Authentication and Item Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 10px;
+            width: 300px;
+        }
+
+        .form-container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-container input,
+        .form-container select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="registerForm" class="form-container">
+            <h1>User Registration</h1>
+            <input type="text" id="regUsername" placeholder="Username" required>
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <select id="regRole" required>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button onclick="register()">Register</button>
+        </div>
+
+        <div id="loginForm" class="form-container">
+            <h1>User Login</h1>
+            <input type="text" id="loginUsername" placeholder="Username" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button onclick="login()">Login</button>
+        </div>
+
+        <div id="addItemForm" class="form-container" style="display:none">
+            <h1>Add Item</h1>
+            <input type="text" id="itemName" placeholder="Item Name" required>
+            <input type="text" id="itemDescription" placeholder="Item Description" required>
+            <input type="number" id="itemQuantity" placeholder="Item Quantity" required>
+            <button onclick="addItem()">Add Item</button>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:3000';
+
+        function register() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            fetch(`${apiUrl}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password, role })
+            })
+            .then(response => response.text())
+            .then(message => alert(message))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            fetch(`${apiUrl}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                localStorage.setItem('token', data.token);
+                alert('Login successful');
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('addItemForm').style.display = 'block';
+            })
+            .catch(error => 
+            alert('Login Unsucessful')
+            // console.error('Error:', error)
+        );
+        }
+
+        function addItem() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Please log in to add an item');
+                return;
+            }
+            const name = document.getElementById('itemName').value;
+            const description = document.getElementById('itemDescription').value;
+            const quantity = document.getElementById('itemQuantity').value;
+            fetch(`${apiUrl}/api/items`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description, quantity })
+            })
+            .then(response => response.json())
+            .then(item => console.log('Item added:', item))
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
